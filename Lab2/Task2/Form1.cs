@@ -31,33 +31,51 @@ namespace Task2
             isDrawing = false;
         }
 
-        private void DrawBres(int x0,int x1,int y0,int y1, Color color)
+        private void DrawBres(int x0, int x1, int y0, int y1, Color color)
         {
-            int dx = Math.Abs(x1 - x0);
-            int dy = Math.Abs(y1 - y0);
-            int sx = (x0 < x1) ? 1 : -1;
-            int sy = (y0 < y1) ? 1 : -1;
-            int err = dx - dy;
-
-            while (true)
+            bool steep = Math.Abs(y1 - y0) > Math.Abs(x1 - x0);
+            if (steep)
             {
-                drawboard.SetPixel(x0, y0, color);
+                Swap(ref x0, ref y0);
+                Swap(ref x1, ref y1);
+            }
 
-                if (x0 == x1 && y0 == y1)
-                    break;
+            if (x0 > x1)
+            {
+                Swap(ref x0, ref x1);
+                Swap(ref y0, ref y1);
+            }
 
-                int e2 = 2 * err;
-                if (e2 > -dy)
+            int dx = x1 - x0;
+            int dy = Math.Abs(y1 - y0);
+            int error = dx / 2;
+            int ystep = (y0 < y1) ? 1 : -1;
+            int y = y0;
+
+            for (int x = x0; x <= x1; x++)
+            {
+                if (steep)
                 {
-                    err -= dy;
-                    x0 += sx;
+                    drawboard.SetPixel(y, x, color);
                 }
-                if (e2 < dx)
+                else
                 {
-                    err += dx;
-                    y0 += sy;
+                    drawboard.SetPixel(x, y, color);
+                }
+
+                error -= dy;
+                if (error < 0)
+                {
+                    y += ystep;
+                    error += dx;
                 }
             }
+        }
+        private void Swap(ref int a, ref int b)
+        {
+            int temp = a;
+            a = b;
+            b = temp;
         }
 
         private void DrawWu(int x0, int x1, int y0, int y1, Color color)
