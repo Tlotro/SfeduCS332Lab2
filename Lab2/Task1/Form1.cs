@@ -29,6 +29,7 @@ namespace Task1
         Bitmap BMP;
         Bitmap PBMP;
         int penradius = 1;
+        Point[] shifts = { new Point(0, 1), new Point(1, 1), new Point(1, 0), new Point(1, -1), new Point(0, -1), new Point(-1, -1), new Point(-1, 0), new Point(-1, 1) };
         public Form1()
         {
             InitializeComponent();
@@ -104,6 +105,8 @@ namespace Task1
 
         private void DrawLine(int X, int Y, Color filledColor)
         {
+            if (filledColor == colorDialog1.Color)
+                return;
             int x = X+1;
             int y = Y;
             while (x < BMP.Width && BMP.GetPixel(x, y) == filledColor)
@@ -162,9 +165,60 @@ namespace Task1
             DamnedList.Insert(i, DamnedPoint);
         }
 
+        private void RecursiveFillOfThisDamnedList(List<Point> DamnedList, int X, int Y, int direction,Color filledColor)
+        {
+            for (int i = 1; i <=3; i++)
+            {
+                if (BMP.GetPixel(X + shifts[(direction + i)%8].X, Y + shifts[(direction + i)%8].Y) == filledColor)
+                {
+                    PutTheDamnedPointIntoTheDamnedListFunction(DamnedList, new Point(X + shifts[(direction + i)%8].X, Y + shifts[(direction + i)%8].Y));
+                    RecursiveFillOfThisDamnedList(DamnedList, X + shifts[(direction + i)%8].X, Y + shifts[(direction + i)%8].Y, direction, filledColor);
+                }
+            }
+        }
+
+        private List<Point> FillEntireOutline(int X, int Y)
+        {
+            Color innerColor = BMP.GetPixel(X, Y);
+            List<Point> res = new List<Point>();
+            while (BMP.GetPixel(X, Y) == innerColor)
+            {
+                if (X > BMP.Width)
+                    return res;
+                X++;
+            }
+            int startX = X;
+            int startY = Y;
+            Color borderColor = BMP.GetPixel(X, Y);
+            if (borderColor == colorDialog1.Color)
+                return res;
+            int x = X + 1;
+            int y = Y;
+            while (x < BMP.Width && BMP.GetPixel(x, y) == borderColor)
+            {
+                PutTheDamnedPointIntoTheDamnedListFunction(res, new Point(x, y));
+                x++;
+            }
+            int limright = x - 1;
+            x = X;
+            while (x >= 0 && BMP.GetPixel(x, y) == borderColor)
+            {
+                PutTheDamnedPointIntoTheDamnedListFunction(res, new Point(x, y));
+                x--;
+            }
+            int limleft = x + 1;
+            for (int i = limleft; i <= limright; i++)
+            {
+                if (y - 1 >= 0 && BMP.GetPixel(i, y - 1) == borderColor)
+                    DrawLine(i, y - 1, borderColor);
+                if (y + 1 < BMP.Height && BMP.GetPixel(i, y + 1) == borderColor)
+                    DrawLine(i, y + 1, borderColor);
+            }
+            return res;
+        }
+
         private List<Point> GetOutline(int X, int Y)
         {
-            Point[] shifts = { new Point(0, 1), new Point(1, 1), new Point(1, 0), new Point(1, -1), new Point(0, -1), new Point(-1, -1), new Point(-1, 0), new Point(-1, 1) };
             Color innerColor = BMP.GetPixel(X, Y);
             while (BMP.GetPixel(X, Y) == innerColor)
             {
@@ -184,6 +238,7 @@ namespace Task1
                 if (BMP.GetPixel(X + CP.X, Y + CP.Y) == borderColor)
                 {
                     PutTheDamnedPointIntoTheDamnedListFunction(res, new Point(X + CP.X, Y + CP.Y));
+                    RecursiveFillOfThisDamnedList(res, X, Y, direction, borderColor);
                     X += CP.X;
                     Y += CP.Y;
                     direction = (direction + 6 + i) % 8;
@@ -197,6 +252,7 @@ namespace Task1
                 if (BMP.GetPixel(X+CP.X,Y+CP.Y)==borderColor)
                 {
                     PutTheDamnedPointIntoTheDamnedListFunction(res, new Point(X + CP.X, Y + CP.Y));
+                    RecursiveFillOfThisDamnedList(res, X, Y, direction, borderColor);
                     X += CP.X;
                     Y+= CP.Y;
                     direction = (direction + 6+i) % 8;
@@ -224,6 +280,10 @@ namespace Task1
                             DrawPattern(mousepos.X, mousepos.Y, (mousepos.X+PBMP.Width/2)% PBMP.Width, (mousepos.Y+PBMP.Height/2)%PBMP.Height, filledColor);
                         break;
                         case 3:
+                            foreach (Point p in FillEntireOutline(mousepos.X, mousepos.Y))
+                                BMP.SetPixel(p.X, p.Y, colorDialog1.Color);
+                        break;
+                        case 4:
                             foreach (Point p in GetOutline(mousepos.X, mousepos.Y))
                                 BMP.SetPixel(p.X, p.Y, colorDialog1.Color);
                         break;
