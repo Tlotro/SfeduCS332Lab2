@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Task3.Properties
+namespace WindowsFormsApp3.Properties
 {
 
 
