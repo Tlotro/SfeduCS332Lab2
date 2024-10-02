@@ -11,19 +11,6 @@ using System.Windows.Forms;
 
 namespace Task1
 {
-    class CustomPointComparer : IComparer<Point>
-    {
-        public int Compare(Point x, Point y)
-        {
-            if (x.X == y.X && x.Y == y.Y)
-                return 0;
-
-            if (x.Y > y.Y || (x.Y==y.Y && x.X > y.X))
-                return 1;
-            else
-            return -1;
-        }
-    }
     public partial class Form1 : Form
     {
         Bitmap BMP;
@@ -70,6 +57,26 @@ namespace Task1
                     PenSizeBox.Visible = false;
                     break;
                 case 3:
+                    ColorButton.Enabled = true;
+                    ColorButton.Visible = true;
+                    pictureBoxPattern.Enabled = false;
+                    pictureBoxPattern.Visible = false;
+                    LoadPatternButton.Enabled = false;
+                    LoadPatternButton.Visible = false;
+                    PenSizeBox.Enabled = false;
+                    PenSizeBox.Visible = false;
+                    break;
+                case 4:
+                    ColorButton.Enabled = true;
+                    ColorButton.Visible = true;
+                    pictureBoxPattern.Enabled = false;
+                    pictureBoxPattern.Visible = false;
+                    LoadPatternButton.Enabled = false;
+                    LoadPatternButton.Visible = false;
+                    PenSizeBox.Enabled = false;
+                    PenSizeBox.Visible = false;
+                    break;
+                case 5:
                     ColorButton.Enabled = true;
                     ColorButton.Visible = true;
                     pictureBoxPattern.Enabled = false;
@@ -165,18 +172,6 @@ namespace Task1
             DamnedList.Insert(i, DamnedPoint);
         }
 
-        private void RecursiveFillOfThisDamnedList(List<Point> DamnedList, int X, int Y, int direction,Color filledColor)
-        {
-            for (int i = 1; i <=3; i++)
-            {
-                if (BMP.GetPixel(X + shifts[(direction + i)%8].X, Y + shifts[(direction + i)%8].Y) == filledColor)
-                {
-                    PutTheDamnedPointIntoTheDamnedListFunction(DamnedList, new Point(X + shifts[(direction + i)%8].X, Y + shifts[(direction + i)%8].Y));
-                    RecursiveFillOfThisDamnedList(DamnedList, X + shifts[(direction + i)%8].X, Y + shifts[(direction + i)%8].Y, direction, filledColor);
-                }
-            }
-        }
-
         private List<Point> FillEntireOutline(int X, int Y)
         {
             Color innerColor = BMP.GetPixel(X, Y);
@@ -238,7 +233,6 @@ namespace Task1
                 if (BMP.GetPixel(X + CP.X, Y + CP.Y) == borderColor)
                 {
                     PutTheDamnedPointIntoTheDamnedListFunction(res, new Point(X + CP.X, Y + CP.Y));
-                    RecursiveFillOfThisDamnedList(res, X, Y, direction, borderColor);
                     X += CP.X;
                     Y += CP.Y;
                     direction = (direction + 6 + i) % 8;
@@ -252,11 +246,42 @@ namespace Task1
                 if (BMP.GetPixel(X+CP.X,Y+CP.Y)==borderColor)
                 {
                     PutTheDamnedPointIntoTheDamnedListFunction(res, new Point(X + CP.X, Y + CP.Y));
-                    RecursiveFillOfThisDamnedList(res, X, Y, direction, borderColor);
                     X += CP.X;
                     Y+= CP.Y;
                     direction = (direction + 6+i) % 8;
                     break;
+                }
+            }
+
+            return res;
+        }
+
+        private List<Point> GetOutline2(int X, int Y)
+        {
+            Color innerColor = BMP.GetPixel(X, Y);
+            while (BMP.GetPixel(X, Y) == innerColor)
+            {
+                if (X > BMP.Width)
+                    return null;
+                X++;
+            }
+            Color borderColor = BMP.GetPixel(X, Y);
+            List<Point> res = new List<Point>();
+            Stack<Point> pointStack = new Stack<Point>();
+            pointStack.Push(new Point(X, Y));
+            res.Add(new Point(X, Y));
+            while (pointStack.Count() != 0)
+            {
+                Point p = pointStack.Pop();
+                for (int i = 0; i < 8; i++)
+                {
+                    Point CP = shifts[i % 8];
+                    Point neigh = new Point(p.X + CP.X, p.Y + CP.Y);
+                    if (BMP.GetPixel(X + CP.X, Y + CP.Y) == borderColor && !res.Contains(neigh) && !pointStack.Contains(neigh))
+                    {
+                        PutTheDamnedPointIntoTheDamnedListFunction(res, neigh);
+                        pointStack.Push(neigh);
+                    }
                 }
             }
 
@@ -280,11 +305,15 @@ namespace Task1
                             DrawPattern(mousepos.X, mousepos.Y, (mousepos.X+PBMP.Width/2)% PBMP.Width, (mousepos.Y+PBMP.Height/2)%PBMP.Height, filledColor);
                         break;
                         case 3:
-                            foreach (Point p in FillEntireOutline(mousepos.X, mousepos.Y))
-                                BMP.SetPixel(p.X, p.Y, colorDialog1.Color);
-                        break;
-                        case 4:
                             foreach (Point p in GetOutline(mousepos.X, mousepos.Y))
+                                BMP.SetPixel(p.X, p.Y, colorDialog1.Color);
+                            break;
+                        case 4:
+                            foreach (Point p in GetOutline2(mousepos.X, mousepos.Y))
+                                BMP.SetPixel(p.X, p.Y, colorDialog1.Color);
+                            break;
+                        case 5:
+                            foreach (Point p in FillEntireOutline(mousepos.X, mousepos.Y))
                                 BMP.SetPixel(p.X, p.Y, colorDialog1.Color);
                         break;
                     }
@@ -294,7 +323,7 @@ namespace Task1
         }
         private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
         {
-            if (ActionBox.SelectedIndex == 0 && (Control.MouseButtons & MouseButtons.Left) != 0 )
+            if (ActionBox.SelectedIndex == 0 && pictureBox1.Image != null && (Control.MouseButtons & MouseButtons.Left) != 0 )
             {
                 Point mousepos = GetCoords(e.Location.X, e.Location.Y);
                 if (mousepos.X < BMP.Width && mousepos.X >= 0 && mousepos.Y < BMP.Height && mousepos.Y >= 0)
@@ -338,6 +367,19 @@ namespace Task1
         private void PenSizeBox_TextChanged(object sender, EventArgs e)
         {
             int.TryParse(PenSizeBox.Text, out penradius);
+        }
+    }
+    class CustomPointComparer : IComparer<Point>
+    {
+        public int Compare(Point x, Point y)
+        {
+            if (x.X == y.X && x.Y == y.Y)
+                return 0;
+
+            if (x.Y > y.Y || (x.Y == y.Y && x.X > y.X))
+                return 1;
+            else
+                return -1;
         }
     }
 }

@@ -83,7 +83,9 @@
             "Draw",
             "FillColor",
             "FillImage",
-            "DrawBorder"});
+            "DrawBorder",
+            "DrawBorder2",
+            "DrawBorder3"});
             this.ActionBox.Location = new System.Drawing.Point(978, 12);
             this.ActionBox.Name = "ActionBox";
             this.ActionBox.Size = new System.Drawing.Size(120, 21);
